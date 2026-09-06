@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Monthly Budget Ledger</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --paper: #efe8d8;
+    --paper-line: #d8cdb2;
+    --ink: #2b3a4a;
+    --ink-soft: #5c6b74;
+    --stamp: #a5402f;
+    --gold: #b4922b;
+    --sage: #6f7d5e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 48px 20px 80px;
+    background: var(--paper);
+    background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 34px;
+    font-family: 'Spectral', serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+  }
+
+  .sheet { width: 100%; max-width: 660px; }
+
+  .letterhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 6px;
+  }
+
+  .letterhead h1 { font-size: 28px; font-weight: 600; margin: 0; letter-spacing: 0.2px; }
+  .letterhead span { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+
+  .intro {
+    font-size: 15px;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin: 10px 0 28px;
+    line-height: 1.5;
+    max-width: 54ch;
+  }
+
+  .income-row { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; flex-wrap: wrap; }
+  .income-row label { font-size: 15px; white-space: nowrap; }
+
+  .income-row input {
+    flex: 1;
+    min-width: 140px;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px dotted var(--ink-soft);
+    font-family: 'Space Mono', monospace;
+    font-size: 17px;
+    color: var(--ink);
+    padding: 4px 2px;
+    outline: none;
+  }
+
+  .income-row input:focus { border-bottom-color: var(--stamp); }
+
+  .income-row button {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .income-row button:active { transform: scale(0.96); }
+
+  .warning { font-size: 13px; color: var(--stamp); min-height: 18px; margin-bottom: 18px; }
+
+  .total-line {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 8px 0;
+    margin-bottom: 30px;
+  }
+
+  .category {
+    margin-bottom: 38px;
+    opacity: 0;
+    transform: translateY(6px);
+    animation: settle 0.5s ease forwards;
+  }
+
+  .category[data-cat="1"] { animation-delay: 0.06s; }
+  .category[data-cat="2"] { animation-delay: 0.12s; }
+  .category[data-cat="3"] { animation-delay: 0.18s; }
+
+  @keyframes settle { to { opacity: 1; transform: translateY(0); } }
+
+  .category-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid var(--paper-line);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+
+  .category-index { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--ink-soft); }
+  .category-name { font-size: 18px; font-weight: 600; flex: 1; }
+  .category-pct { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--ink-soft); }
+  .category-amount { font-family: 'Space Mono', monospace; font-size: 19px; font-weight: 700; }
+
+  .category[data-cat="0"] .category-amount { color: var(--stamp); }
+  .category[data-cat="1"] .category-amount { color: var(--sage); }
+  .category[data-cat="2"] .category-amount { color: var(--ink); }
+  .category[data-cat="3"] .category-amount { color: var(--gold); }
+
+  .category[data-cat="0"] .bar-fill { background: var(--stamp); }
+  .category[data-cat="1"] .bar-fill { background: var(--sage); }
+  .category[data-cat="2"] .bar-fill { background: var(--ink); }
+  .category[data-cat="3"] .bar-fill { background: var(--gold); }
+
+  .category[data-cat="0"] .chip .icon { background: var(--stamp); }
+  .category[data-cat="1"] .chip .icon { background: var(--sage); }
+  .category[data-cat="2"] .chip .icon { background: var(--ink); }
+  .category[data-cat="3"] .chip .icon { background: var(--gold); }
+
+  .bar-track { height: 3px; background: var(--paper-line); margin-bottom: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; width: 0%; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; }
+
+  .margin-comment {
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--ink-soft);
+    min-height: 16px;
+    margin-bottom: 14px;
+    opacity: 0;
+    transform: translateY(-3px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  .margin-comment.show { opacity: 1; transform: translateY(0); }
+
+  .bar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .items-bar, .amounts-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(43, 58, 74, 0.04);
+    border: 1px solid var(--paper-line);
+    padding: 6px 10px;
+    border-radius: 3px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .chip:focus-within { border-color: var(--ink); background: rgba(43, 58, 74, 0.07); }
+
+  .chip .icon { width: 7px; height: 7px; flex-shrink: 0; transform: rotate(45deg); opacity: 0.85; }
+
+  .chip input.desc {
+    border: none;
+    background: transparent;
+    font-family: 'Spectral', serif;
+    font-size: 13px;
+    color: var(--ink);
+    width: 118px;
+    outline: none;
+  }
+
+  .chip.amount-chip input.amt {
+    border: none;
+    background: transparent;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    width: 64px;
+    text-align: right;
+    outline: none;
+  }
+
+  .chip.amount-chip .dollar { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+
+  .category-summary {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-top: 1px dashed var(--paper-line);
+    padding-top: 8px;
+  }
+
+  .category-summary .remaining { font-weight: 700; transition: color 0.2s ease; }
+  .category-summary .remaining.under { color: var(--sage); }
+  .category-summary .remaining.over { color: var(--stamp); }
+  .category-summary .remaining.exact { color: var(--ink); }
+
+  .footer-note {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 2px solid var(--ink);
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .footer-note.show { opacity: 1; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <div class="letterhead">
+    <h1>Monthly Budget Ledger</h1>
+    <span id="today"></span>
+  </div>
+  <p class="intro">Enter your income once. Each category shows what's set aside, an items bar for what you're spending it on, a matching amounts bar, and a running total with whatever's left over.</p>
+
+  <div class="income-row">
+    <label for="income">Monthly income&nbsp;$</label>
+    <input type="number" id="income" placeholder="0.00" step="0.01">
+    <button onclick="calculate()">Calculate</button>
+  </div>
+  <div class="warning" id="warning"></div>
+
+  <div class="total-line hidden" id="totalLine">
+    <span>TOTAL MONTHLY INCOME</span>
+    <span id="totalAmount">0.00</span>
+  </div>
+
+  <div id="categories"></div>
+
+  <div class="footer-note hidden" id="footerNote">Budget created successfully!</div>
+
+</div>
+
+<script>
+  document.getElementById('today').textContent = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+
+  const categories = [
+    {
+      name: "Non negotiable", pct: 20, spaces: 3,
+      notes: {
+        under: "Some room left in what's non-negotiable.",
+        on: "Covered, exactly as planned.",
+        over: "Running past what's non-negotiable — check for slack elsewhere."
+      }
+    },
+    {
+      name: "Savings and investments", pct: 40, spaces: 2,
+      notes: {
+        under: "There's room to put more away.",
+        on: "Future you says thanks.",
+        over: "More than planned toward savings — no complaints here."
+      }
+    },
+    {
+      name: "Essentials", pct: 30, spaces: 4,
+      notes: {
+        under: "A little slack left in essentials.",
+        on: "Essentials squared away.",
+        over: "Essentials are running over budget."
+      }
+    },
+    {
+      name: "Lifestyle", pct: 10, spaces: 2,
+      notes: {
+        under: "Some fun money still unspent.",
+        on: "Spent exactly what you set aside for enjoying it.",
+        over: "Lifestyle spending has gone past its share."
+      }
+    }
+  ];
+
+  function calculate() {
+    const incomeInput = document.getElementById('income');
+    const warning = document.getElementById('warning');
+    const container = document.getElementById('categories');
+    const totalLine = document.getElementById('totalLine');
+    const footerNote = document.getElementById('footerNote');
+    const income = parseFloat(incomeInput.value);
+
+    container.innerHTML = '';
+
+    if (isNaN(income) || income <= 0) {
+      warning.textContent = 'Invalid income amount. Please enter a positive value.';
+      totalLine.classList.add('hidden');
+      footerNote.classList.remove('show');
+      footerNote.classList.add('hidden');
+      return;
+    }
+
+    warning.textContent = '';
+    totalLine.classList.remove('hidden');
+    footerNote.classList.remove('hidden');
+    footerNote.classList.add('show');
+    document.getElementById('totalAmount').textContent = income.toFixed(2);
+
+    categories.forEach((cat, i) => {
+      const target = income * (cat.pct / 100);
+
+      const catDiv = document.createElement('div');
+      catDiv.className = 'category';
+      catDiv.setAttribute('data-cat', i);
+
+      catDiv.innerHTML = `
+        <div class="category-head">
+          <span class="category-index">${i + 1})</span>
+          <span class="category-name">${cat.name}</span>
+          <span class="category-pct">${cat.pct}%</span>
+          <span class="category-amount">$${target.toFixed(2)}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="bar-${i}"></div></div>
+        <div class="margin-comment" id="comment-${i}"></div>
+
+        <div class="bar-label">Items</div>
+        <div class="items-bar" id="items-bar-${i}"></div>
+
+        <div class="bar-label">Amounts</div>
+        <div class="amounts-bar" id="amounts-bar-${i}"></div>
+
+        <div class="category-summary">
+          <span>Target: $${target.toFixed(2)}</span>
+          <span id="allocated-${i}">Allocated: $0.00</span>
+          <span class="remaining exact" id="remaining-${i}">Remaining: $${target.toFixed(2)}</span>
+        </div>
+      `;
+
+      const itemsBar = catDiv.querySelector('#items-bar-' + i);
+      const amountsBar = catDiv.querySelector('#amounts-bar-' + i);
+
+      for (let j = 1; j <= cat.spaces; j++) {
+        const itemChip = document.createElement('div');
+        itemChip.className = 'chip';
+        itemChip.innerHTML = `<span class="icon"></span><input type="text" class="desc" placeholder="Item ${j}">`;
+
+        const amountChip = document.createElement('div');
+        amountChip.className = 'chip amount-chip';
+        amountChip.innerHTML = `<span class="dollar">$</span><input type="number" class="amt" step="0.01" placeholder="0.00">`;
+
+        const amtInput = amountChip.querySelector('.amt');
+        amtInput.addEventListener('input', () => updateCategory(i, target));
+
+        itemsBar.appendChild(itemChip);
+        amountsBar.appendChild(amountChip);
+      }
+
+      container.appendChild(catDiv);
+    });
+  }
+
+  function updateCategory(i, target) {
+    const catDiv = document.querySelectorAll('.category')[i];
+    const amounts = Array.from(catDiv.querySelectorAll('.amt')).map(inp => parseFloat(inp.value) || 0);
+    const entered = amounts.reduce((a, b) => a + b, 0);
+    const remaining = target - entered;
+
+    const bar = document.getElementById('bar-' + i);
+    const pctFilled = target > 0 ? (entered / target) * 100 : 0;
+    bar.style.width = Math.min(pctFilled, 100) + '%';
+    bar.style.opacity = entered > target ? '0.55' : '1';
+
+    document.getElementById('allocated-' + i).textContent = 'Allocated: $' + entered.toFixed(2);
+
+    const remainingEl = document.getElementById('remaining-' + i);
+    remainingEl.classList.remove('under', 'over', 'exact');
+    if (Math.abs(remaining) < 0.005) {
+      remainingEl.textContent = 'Remaining: $0.00';
+      remainingEl.classList.add('exact');
+    } else if (remaining > 0) {
+      remainingEl.textContent = 'Remaining: $' + remaining.toFixed(2);
+      remainingEl.classList.add('under');
+    } else {
+      remainingEl.textContent = 'Over by $' + Math.abs(remaining).toFixed(2);
+      remainingEl.classList.add('over');
+    }
+
+    const comment = document.getElementById('comment-' + i);
+    if (entered <= 0) {
+      comment.classList.remove('show');
+      return;
+    }
+
+    const ratio = entered / target;
+    const notes = categories[i].notes;
+    let text;
+    if (ratio < 0.9) text = notes.under;
+    else if (ratio <= 1.1) text = notes.on;
+    else text = notes.over;
+
+    comment.textContent = text;
+    comment.classList.add('show');
+  }
+
+  document.getElementById('income').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') calculate();
+  });
+</script>
+
+</body>
+</html>
