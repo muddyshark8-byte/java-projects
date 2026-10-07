@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Health Welfare Hospital – Appointment System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f5f8f7;--card:#fff;--ink:#12262b;--mute:#5d7076;--line:#d9e3e1;--acc:#0f766e;--acc-ink:#fff;--soft:#e2f1ee;--warn:#b4400e;--warn-soft:#fbe9df;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1719;--card:#132326;--ink:#e6f0ee;--mute:#92a8ab;--line:#24393c;--acc:#3cc4b4;--acc-ink:#04201d;--soft:#173436;--warn:#f0905d;--warn-soft:#3a2418}}
+:root[data-theme="dark"]{--bg:#0c1719;--card:#132326;--ink:#e6f0ee;--mute:#92a8ab;--line:#24393c;--acc:#3cc4b4;--acc-ink:#04201d;--soft:#173436;--warn:#f0905d;--warn-soft:#3a2418}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "Instrument Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;margin:0;line-height:1.15}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+aside{background:var(--ink);color:var(--bg);padding:24px 16px;position:sticky;top:0;height:100vh}
+aside h1{font-size:20px;margin-bottom:4px}
+aside p{margin:0 0 24px;font-size:13px;opacity:.7}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;font-weight:500;padding:11px 12px;border-radius:8px;cursor:pointer;opacity:.75}
+nav button:hover{opacity:1;background:rgba(255,255,255,.08)}
+nav button[aria-selected="true"]{opacity:1;background:var(--acc);color:var(--acc-ink)}
+.foot{position:absolute;left:16px;right:16px;bottom:20px;font-size:12px;opacity:.7}
+.foot button{background:none;border:1px solid currentColor;color:inherit;border-radius:6px;padding:5px 9px;font:inherit;cursor:pointer;margin-top:8px}
+main{padding:32px clamp(16px,4vw,48px);max-width:1000px;width:100%}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 28px}
+.stat{background:var(--soft);border-radius:10px;padding:10px 16px;min-width:110px}
+.stat b{display:block;font:700 24px "Bricolage Grotesque",sans-serif}
+.stat span{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
+.card h3{font-size:18px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{display:block;font-size:13px;font-weight:600;color:var(--mute)}
+input,select{width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.btn{background:var(--acc);color:var(--acc-ink);border:0;border-radius:8px;padding:10px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer;margin-top:14px}
+.btn.ghost{background:none;color:var(--acc);border:1px solid var(--acc);padding:6px 10px;margin:0}
+.row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.row>label{flex:1;min-width:160px}
+.row .btn{margin:0}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+th{color:var(--mute);font-weight:600;font-size:13px}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--soft);color:var(--acc);font-size:12px;font-weight:600}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.empty{color:var(--mute);padding:8px 0}
+.dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:0}
+.dl dt{color:var(--mute)}.dl dd{margin:0;font-weight:500}
+.hello{font-size:16px;margin-bottom:12px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+#toast.on{opacity:1}#toast.err{background:var(--warn);color:#fff}
+@media (max-width:760px){.shell{grid-template-columns:1fr}aside{position:static;height:auto;padding:14px 12px}aside p{margin-bottom:10px}nav{display:flex;gap:6px}nav button{text-align:center;padding:9px 6px}.foot{position:static;margin-top:12px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside>
+<h1>Health Welfare Hospital</h1>
+<p>Appointment system</p>
+<nav role="tablist" id="nav">
+<button role="tab" data-v="admin" aria-selected="true">Admin</button>
+<button role="tab" data-v="doctor" aria-selected="false">Doctor</button>
+<button role="tab" data-v="patient" aria-selected="false">Patient</button>
+</nav>
+<div class="foot">Demo data is saved in this browser only.<br><button id="reset">Reset demo data</button></div>
+</aside>
+<main id="main"></main>
+</div>
+<div id="toast" role="status"></div>
+<script>
+const SEED={
+patients:[{id:101,name:"Sarah",age:29,gender:"Female",nationality:"Nigerian",phone:"08011112222"},{id:102,name:"James",age:45,gender:"Male",nationality:"British",phone:"08033334444"},{id:103,name:"Noah Barnes",age:40,gender:"Male",nationality:"European",phone:"08033962749"}],
+doctors:[{id:200,name:"Handel",gender:"Male",spec:"Orthopedics",slots:"10:00 - 12:00"},{id:201,name:"Amaka",gender:"Female",spec:"Cardiology",slots:"9:00 - 11:00"},{id:203,name:"Amara",gender:"Female",spec:"Optometry",slots:"8:00 - 11:00"}],
+appts:[{id:1,pid:101,did:200,date:"2026-09-25",time:"10:30",status:"Confirmed",loc:"Room 4"},{id:2,pid:102,did:201,date:"2026-09-26",time:"09:15",status:"Confirmed",loc:"Room 2"},{id:3,pid:103,did:203,date:"2026-09-28",time:"11:17",status:"Confirmed",loc:"Room 2"}],
+records:[{pid:101,blood:"O+",allergies:"None",prior:"Asthma",current:"None currently",kin:"Mary",kinPhone:"08055556666",lastVisit:"2026-08-01",admitted:"2026-08-01"},{pid:102,blood:"A-",allergies:"Penicillin",prior:"None",current:"Mild flu",kin:"Tom",kinPhone:"08077778888",lastVisit:"2026-07-15",admitted:"2026-07-15"},{pid:103,blood:"A+",allergies:"Peanut Butter",prior:"None",current:"Under review",kin:"Philip",kinPhone:"09165332146",lastVisit:"2026-07-17",admitted:"2026-07-19"}]};
+const KEY="hms-demo-v1";
+let db,view="admin",docSession=null,patSession=null,docRecord=null;
+function load(){try{const s=localStorage.getItem(KEY);if(s)return JSON.parse(s)}catch(e){}return JSON.parse(JSON.stringify(SEED))}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
+db=load();
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let tt;function toast(m,err){const t=$("#toast");t.textContent=m;t.className="on"+(err?" err":"");clearTimeout(tt);tt=setTimeout(()=>t.className="",2800)}
+const pName=id=>(db.patients.find(p=>p.id===id)||{}).name||"Unknown";
+const dName=id=>{const d=db.doctors.find(d=>d.id===id);return d?"Dr. "+d.name:"Unknown"};
+const nextApptId=()=>Math.max(0,...db.appts.map(a=>a.id))+1;
+const val=id=>$("#"+id).value.trim();
+const num=id=>parseInt(val(id),10);
+
+function apptTable(list,mode){
+if(!list.length)return '<p class="empty">No appointments found.</p>';
+return '<div class="tw"><table><tr><th>ID</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Location</th><th>Status</th>'+(mode==="patient"?"<th></th>":"")+'</tr>'+
+list.map(a=>'<tr><td>'+a.id+'</td><td>'+esc(pName(a.pid))+'</td><td>'+esc(dName(a.did))+'</td><td>'+esc(a.date)+'</td><td>'+esc(a.time)+'</td><td>'+esc(a.loc)+'</td><td><span class="tag '+(a.status==="Confirmed"?"":"warn")+'">'+esc(a.status)+'</span></td>'+(mode==="patient"?'<td><button class="btn ghost" data-post="'+a.id+'">Postpone</button></td>':"")+'</tr>').join("")+"</table></div>";
+}
+
+function adminView(){
+return '<h2>Admin</h2><div class="stats"><div class="stat"><b>'+db.patients.length+'</b><span>Patients</span></div><div class="stat"><b>'+db.doctors.length+'</b><span>Doctors</span></div><div class="stat"><b>'+db.appts.length+'</b><span>Appointments</span></div></div>'+
+'<div class="card"><h3>Add patient</h3><div class="grid"><label>Name<input id="pn"></label><label>ID<input id="pi" type="number"></label><label>Age<input id="pa" type="number" min="0"></label><label>Gender<select id="pg"><option>Female</option><option>Male</option><option>Other</option></select></label><label>Nationality<input id="pnat"></label><label>Phone number<input id="pp" type="tel"></label></div><button class="btn" id="addP">Add patient</button></div>'+
+'<div class="card"><h3>Add doctor</h3><div class="grid"><label>Name<input id="dn"></label><label>ID<input id="di" type="number"></label><label>Gender<select id="dg"><option>Female</option><option>Male</option><option>Other</option></select></label><label>Specialization<input id="ds"></label><label>Available time slots<input id="dt" placeholder="9:00 - 11:00"></label></div><button class="btn" id="addD">Add doctor</button></div>'+
+'<div class="card"><h3>Patients</h3><div class="tw"><table><tr><th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Nationality</th><th>Phone</th></tr>'+db.patients.map(p=>'<tr><td>'+p.id+'</td><td>'+esc(p.name)+'</td><td>'+p.age+'</td><td>'+esc(p.gender)+'</td><td>'+esc(p.nationality)+'</td><td>'+esc(p.phone)+'</td></tr>').join("")+'</table></div></div>'+
+'<div class="card"><h3>Doctors</h3><div class="tw"><table><tr><th>ID</th><th>Name</th><th>Gender</th><th>Specialization</th><th>Available</th></tr>'+db.doctors.map(d=>'<tr><td>'+d.id+'</td><td>Dr. '+esc(d.name)+'</td><td>'+esc(d.gender)+'</td><td>'+esc(d.spec)+'</td><td>'+esc(d.slots)+'</td></tr>').join("")+'</table></div></div>';
+}
+
+function doctorView(){
+let h='<h2>Doctor</h2><div class="card"><h3>Verify your ID</h3><div class="row"><label>Doctor ID<input id="vid" type="number"></label><button class="btn" id="verify">Verify</button></div></div>';
+if(docSession){
+const d=docSession;
+h+='<div class="card"><p class="hello">Welcome, Dr. '+esc(d.name)+' <span class="tag">'+esc(d.spec)+'</span></p><h3>Your appointments</h3>'+apptTable(db.appts.filter(a=>a.did===d.id))+'</div><div class="card"><h3>Patient medical record</h3><div class="row"><label>Patient ID<input id="rid" type="number"></label><button class="btn" id="lookup">View record</button></div>'+(docRecord?recordHtml(docRecord):"")+'</div>';
+}
+return h;
+}
+
+function recordHtml(r){
+if(r==="none")return '<p class="empty">No medical record found for that patient.</p>';
+return '<h3 style="margin-top:18px">'+esc(pName(r.pid))+' <span class="tag">ID '+r.pid+'</span></h3><dl class="dl"><dt>Blood group</dt><dd>'+esc(r.blood)+'</dd><dt>Allergies</dt><dd>'+esc(r.allergies)+'</dd><dt>Prior illness</dt><dd>'+esc(r.prior)+'</dd><dt>Current ailments</dt><dd>'+esc(r.current)+'</dd><dt>Next of kin</dt><dd>'+esc(r.kin)+' ('+esc(r.kinPhone)+')</dd><dt>Last visit</dt><dd>'+esc(r.lastVisit)+'</dd><dt>Admission date</dt><dd>'+esc(r.admitted)+'</dd></dl>';
+}
+
+function patientView(){
+let h='<h2>Patient</h2><div class="card"><h3>Find your appointments</h3><div class="row"><label>Patient ID<input id="sid" type="number"></label><button class="btn" id="signin">Check appointments</button></div></div>';
+if(patSession){
+const p=patSession;
+h+='<div class="card"><p class="hello">Hello, '+esc(p.name)+'</p>'+apptTable(db.appts.filter(a=>a.pid===p.id),"patient")+'<div id="postBox"></div></div><div class="card"><h3>Book an appointment</h3><div class="grid"><label>Doctor<select id="bd">'+db.doctors.map(d=>'<option value="'+d.id+'">Dr. '+esc(d.name)+' – '+esc(d.spec)+' ('+esc(d.slots)+')</option>').join("")+'</select></label><label>Date<input id="bdate" type="date"></label><label>Time<input id="btime" type="time"></label><label>Location<input id="bloc" placeholder="Room 3"></label></div><button class="btn" id="book">Book appointment</button></div>';
+}
+return h;
+}
+
+function render(){
+document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===view));
+$("#main").innerHTML=view==="admin"?adminView():view==="doctor"?doctorView():patientView();
+}
+
+document.addEventListener("click",e=>{
+const t=e.target;
+if(t.dataset.v){view=t.dataset.v;render();return}
+if(t.id==="reset"){db=JSON.parse(JSON.stringify(SEED));save();docSession=patSession=docRecord=null;render();toast("Demo data reset");return}
+if(t.id==="addP"){
+const p={name:val("pn"),id:num("pi"),age:num("pa"),gender:$("#pg").value,nationality:val("pnat"),phone:val("pp")};
+if(!p.name||isNaN(p.id)||isNaN(p.age)||!p.nationality||!p.phone)return toast("Fill in every patient field.",1);
+if(db.patients.some(x=>x.id===p.id))return toast("A patient with that ID already exists.",1);
+db.patients.push(p);save();render();toast("Patient added successfully");return}
+if(t.id==="addD"){
+const d={name:val("dn"),id:num("di"),gender:$("#dg").value,spec:val("ds"),slots:val("dt")};
+if(!d.name||isNaN(d.id)||!d.spec||!d.slots)return toast("Fill in every doctor field.",1);
+if(db.doctors.some(x=>x.id===d.id))return toast("A doctor with that ID already exists.",1);
+db.doctors.push(d);save();render();toast("Doctor registered");return}
+if(t.id==="verify"){
+const d=db.doctors.find(x=>x.id===num("vid"));docRecord=null;docSession=d||null;render();
+toast(d?"Welcome, Dr. "+d.name:"No doctor found with that ID.",!d);return}
+if(t.id==="lookup"){
+const r=db.records.find(x=>x.pid===num("rid"));docRecord=r||"none";render();return}
+if(t.id==="signin"){
+const p=db.patients.find(x=>x.id===num("sid"));patSession=p||null;render();
+if(!p)toast("No patient found with that ID.",1);return}
+if(t.id==="book"){
+const did=parseInt($("#bd").value,10),date=val("bdate"),time=val("btime"),loc=val("bloc");
+if(!date||!time||!loc)return toast("Enter a date, time and location.",1);
+if(db.appts.some(a=>a.did===did&&a.date===date&&a.time===time))return toast("That doctor is already booked at that time.",1);
+db.appts.push({id:nextApptId(),pid:patSession.id,did,date,time,status:"Confirmed",loc});save();render();toast("Appointment booked");return}
+if(t.dataset.post){
+$("#postBox").innerHTML='<div class="row" style="margin-top:16px"><label>New date<input id="nd" type="date"></label><label>New time<input id="nt" type="time"></label><button class="btn" data-save="'+t.dataset.post+'">Request change for #'+esc(t.dataset.post)+'</button></div>';return}
+if(t.dataset.save){
+const a=db.appts.find(x=>x.id===+t.dataset.save),d=val("nd"),tm=val("nt");
+if(!d||!tm)return toast("Date and time cannot be empty.",1);
+a.date=d;a.time=tm;a.status="Pending review";save();render();toast("The management will review your request");return}
+});
+render();
+</script>
+</body>
+</html>
